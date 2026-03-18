@@ -1,0 +1,31 @@
+# OpenClaw instruction/configuration files
+.openclaw/
+
+# Memory files (local to workspace)
+memory/
+MEMORY.md
+
+
+
+# IDE/Editor files
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+tmp/
+temp/
+*.tem
+
+build/
+node_modules
+.env

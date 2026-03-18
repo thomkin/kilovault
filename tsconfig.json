@@ -1,0 +1,35 @@
+{
+  "compilerOptions": {
+    /* Target & Library */
+    "target": "ESNext",
+    "lib": [
+      "ESNext",
+      "DOM",
+      "DOM.Iterable"
+    ] /* DOM needed for Bun/Deno web-standard APIs like fetch */,
+    "module": "ESNext",
+    "moduleResolution": "bundler" /* Optimized for Bun and modern Deno */,
+
+    /* Strictness */
+    "strict": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "isolatedModules": true /* Essential for Bun/Deno transpile-only mode */,
+
+    /* Path Aliases */
+    "baseUrl": ".",
+    "paths": {
+      "@crunch/*": ["./build/crunch.ts/src/*"]
+    },
+
+    /* Types */
+    "types": ["node" /* If using Bun-specific APIs */],
+    "typeRoots": ["./node_modules/@types"],
+
+    /* No-Emit (Bun/Deno run the .ts files directly) */
+    "noEmit": true /* We don't need to generate a /dist folder */,
+    "allowImportingTsExtensions": true /* Allows Deno-style .ts imports if needed */
+  },
+  "include": ["src/**/*", "build/crunch.ts/src/**/*"],
+  "exclude": ["node_modules"]
+}
