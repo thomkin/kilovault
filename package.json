@@ -11,6 +11,7 @@
     "test:nobuild": "vitest run",
     "dev": "nodemon --watch src --ext ts --exec \"pnpm run crunch && tsx --env-file=.env src/index.ts\"",
     "migrate": "tsx --env-file=.env scripts/migrate.ts",
+    "migrate:prod": "tsx --env-file=.env.production scripts/migrate.ts",
     "dev1": "pnpm run crunch && tsx --watch --env-file=.env src/index.ts"
   },
   "keywords": [],

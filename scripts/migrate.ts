@@ -5,7 +5,6 @@ import { LibsqlDialect } from "@libsql/kysely-libsql";
 import { createClient } from "@libsql/client";
 
 // 1. Setup the DB connection (Same as your app)
-console.log(process.env.DB_URL, process.env.DB_TOKEN);
 const db = new Kysely<any>({
   dialect: new LibsqlDialect({
     client: createClient({
