@@ -22,8 +22,8 @@ importers:
         specifier: ^0.4.1
         version: 0.4.1(kysely@0.28.12)
       crunch.ts:
-        specifier: github:thomkin/crunch.ts#0cce0bf5cb54bd6664b12cf59b6a4a6da21dd420
-        version: https://codeload.github.com/thomkin/crunch.ts/tar.gz/0cce0bf5cb54bd6664b12cf59b6a4a6da21dd420
+        specifier: github:thomkin/crunch.ts#f8878d92618ed42473737ee24bc8b9b3e659c43d
+        version: https://codeload.github.com/thomkin/crunch.ts/tar.gz/f8878d92618ed42473737ee24bc8b9b3e659c43d
       kysely:
         specifier: ^0.28.12
         version: 0.28.12
@@ -669,8 +669,8 @@ packages:
     resolution: {integrity: sha512-uV2QOWP2nWzsy2aMp8aRibhi9dlzF5Hgh5SHaB9OiTGEyDTiJJyx0uy51QXdyWbtAHNua4XJzUKca3OzKUd3vA==}
     engines: {node: '>= 8'}
 
-  crunch.ts@https://codeload.github.com/thomkin/crunch.ts/tar.gz/0cce0bf5cb54bd6664b12cf59b6a4a6da21dd420:
-    resolution: {tarball: https://codeload.github.com/thomkin/crunch.ts/tar.gz/0cce0bf5cb54bd6664b12cf59b6a4a6da21dd420}
+  crunch.ts@https://codeload.github.com/thomkin/crunch.ts/tar.gz/f8878d92618ed42473737ee24bc8b9b3e659c43d:
+    resolution: {tarball: https://codeload.github.com/thomkin/crunch.ts/tar.gz/f8878d92618ed42473737ee24bc8b9b3e659c43d}
     version: 1.0.0
     hasBin: true
 
@@ -1866,7 +1866,7 @@ snapshots:
       shebang-command: 2.0.0
       which: 2.0.2
 
-  crunch.ts@https://codeload.github.com/thomkin/crunch.ts/tar.gz/0cce0bf5cb54bd6664b12cf59b6a4a6da21dd420:
+  crunch.ts@https://codeload.github.com/thomkin/crunch.ts/tar.gz/f8878d92618ed42473737ee24bc8b9b3e659c43d:
     dependencies:
       ky: 1.14.3
 

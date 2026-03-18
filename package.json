@@ -21,7 +21,7 @@
     "@bunny.net/edgescript-sdk": "^0.12.1",
     "@libsql/client": "^0.17.0",
     "@libsql/kysely-libsql": "^0.4.1",
-    "crunch.ts": "github:thomkin/crunch.ts#0cce0bf5cb54bd6664b12cf59b6a4a6da21dd420",
+    "crunch.ts": "github:thomkin/crunch.ts#f8878d92618ed42473737ee24bc8b9b3e659c43d",
     "kysely": "^0.28.12",
     "typia": "^12.0.1"
   },
