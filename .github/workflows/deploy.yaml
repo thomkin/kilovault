@@ -40,5 +40,5 @@ jobs:
       - name: Deploy Script to Bunny Edge Scripting
         uses: BunnyWay/actions/deploy-script@main
         with:
-          script_id: 68527
+          script_id: ${{ secrets.BUNNY_SCRIPT_ID }}
           file: "dist/index.js"
