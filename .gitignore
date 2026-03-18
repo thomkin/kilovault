@@ -29,3 +29,5 @@ temp/
 build/
 node_modules
 .env
+
+dist
