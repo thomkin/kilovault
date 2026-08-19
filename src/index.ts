@@ -32,17 +32,20 @@ async function handleRequest(
 
   // Apply configurable CORS headers
   const origin = getAllowedOrigin(req);
+  const newHeaders = new Headers(response.headers);
+
   if (origin) {
-    const newHeaders = new Headers(response.headers);
     newHeaders.set("Access-Control-Allow-Origin", origin);
-    return new Response(response.body, {
-      status: response.status,
-      statusText: response.statusText,
-      headers: newHeaders,
-    });
+  } else {
+    // Remove wildcard CORS header if origin not allowed
+    newHeaders.delete("Access-Control-Allow-Origin");
   }
 
-  return response;
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers: newHeaders,
+  });
 }
 
 BunnySDK.net.http.serve({ port: PORT, hostname: "0.0.0.0" }, (req) => {
