@@ -1,10 +1,12 @@
 import type { JwtPayload, ServiceDefinition } from "@crunch/types/service";
 import { signToken } from "@crunch/auth/utils";
+import { timingSafeEqual } from "crypto";
 
 export interface Request {
   secret: string;
   userId: string;
   permissions?: Record<string, boolean>;
+  expiresIn?: number; // Optional token expiration in seconds
 }
 
 export interface Response {
@@ -21,12 +23,34 @@ export const service: ServiceDefinition<Request, Response> = {
       throw new Error("AUTH_SECRET environment variable not set");
     }
 
-    if (req.secret !== EXPECTED_SECRET) {
+    // Constant-time comparison to prevent timing attacks
+    let secretMatch = false;
+    try {
+      secretMatch = timingSafeEqual(
+        Buffer.from(req.secret),
+        Buffer.from(EXPECTED_SECRET),
+      );
+    } catch {
+      // timingSafeEqual throws if lengths differ; treat as mismatch
+      secretMatch = false;
+    }
+
+    if (!secretMatch) {
       throw new Error("Invalid secret");
     }
 
+    const payload: JwtPayload = {
+      sub: req.userId,
+      permissions: req.permissions,
+    };
+
+    // Add expiration if requested (optional for backend services)
+    if (req.expiresIn) {
+      payload.exp = Math.floor(Date.now() / 1000) + req.expiresIn;
+    }
+
     const token = await signToken(
-      { sub: req.userId, permissions: req.permissions } as JwtPayload,
+      payload,
       process.env.JWT_SECRET as string,
     );
 

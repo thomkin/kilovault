@@ -14,7 +14,11 @@ The Kilovault service provides the following routes:
 ### Auth
 
 - **`auth.getToken`** (Public)
-  - **Input:** `{ secret: string, userId: string, permissions?: Record<string, boolean> }`
+  - **Input:** `{ secret: string, userId: string, permissions?: Record<string, boolean>, expiresIn?: number }`
+    - `secret`: Authentication secret (must match `AUTH_SECRET` environment variable)
+    - `userId`: Unique user identifier to embed in token
+    - `permissions`: (optional) Object mapping permission names to boolean values
+    - `expiresIn`: (optional) Token expiration time in seconds (e.g., 3600 for 1 hour). If omitted, token does not expire (suitable for backend services)
   - **Output:** `{ token: string }`
 
 ### History
@@ -40,6 +44,19 @@ The Kilovault service provides the following routes:
 - **`vault.set`** (Requires `vault.set` permission)
   - **Input:** `{ key: string, value: string }`
   - **Output:** `{}`
+
+## Configuration
+
+### Environment Variables
+
+- **`JWT_SECRET`** (required): Secret key for signing and verifying JWT tokens
+- **`AUTH_SECRET`** (required): Secret key for obtaining authentication tokens via `auth.getToken`
+- **`DB_URL`** (required): LibSQL database URL
+- **`DB_TOKEN`** (required): LibSQL authentication token
+- **`ALLOWED_ORIGINS`** (optional): Comma-separated list of allowed CORS origins
+  - Leave empty or omit to default to `*` (wildcard)
+  - Set to `"https://app.example.com,https://api.example.com"` for specific origins
+  - **Security Note**: Do not use wildcard (`*`) in production; restrict to known origins only
 
 ## Development
 
