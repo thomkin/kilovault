@@ -60,6 +60,20 @@ export const service: ServiceDefinition<Request, Response> = {
     if (!req.secret || typeof req.secret !== "string") {
       return null;
     }
+    if (!req.userId || typeof req.userId !== "string") {
+      return null;
+    }
+    if (req.expiresIn !== undefined) {
+      if (typeof req.expiresIn !== "number") {
+        return null;
+      }
+      if (req.expiresIn <= 0) {
+        return null;
+      }
+    }
+    if (req.permissions !== undefined && typeof req.permissions !== "object") {
+      return null;
+    }
     return req;
   },
 };
