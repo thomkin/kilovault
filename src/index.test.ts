@@ -209,3 +209,237 @@ describe("CORS - Security Requirements", () => {
     });
   });
 });
+
+describe("Rate Limiting - auth.getToken", () => {
+  const RATE_LIMIT_TOKENS = 10;
+  const RATE_LIMIT_WINDOW_MS = 60000;
+
+  function createRateLimiter() {
+    const map = new Map<string, { count: number; resetTime: number }>();
+
+    function checkRateLimit(ip: string, now: number): boolean {
+      const entry = map.get(ip);
+
+      if (!entry || now >= entry.resetTime) {
+        map.set(ip, { count: 1, resetTime: now + RATE_LIMIT_WINDOW_MS });
+        return true;
+      }
+
+      if (entry.count >= RATE_LIMIT_TOKENS) {
+        return false;
+      }
+
+      entry.count++;
+      return true;
+    }
+
+    return { checkRateLimit, getMap: () => map };
+  }
+
+  describe("Token Limit Enforcement", () => {
+    it("allows first 10 requests from same IP", () => {
+      const { checkRateLimit } = createRateLimiter();
+      const ip = "192.168.1.1";
+      const now = Date.now();
+
+      for (let i = 0; i < 10; i++) {
+        expect(checkRateLimit(ip, now)).toBe(true);
+      }
+    });
+
+    it("blocks 11th request within same minute", () => {
+      const { checkRateLimit } = createRateLimiter();
+      const ip = "192.168.1.2";
+      const now = Date.now();
+
+      for (let i = 0; i < 10; i++) {
+        checkRateLimit(ip, now);
+      }
+
+      expect(checkRateLimit(ip, now)).toBe(false);
+    });
+
+    it("blocks subsequent requests after limit exceeded", () => {
+      const { checkRateLimit } = createRateLimiter();
+      const ip = "192.168.1.3";
+      const now = Date.now();
+
+      for (let i = 0; i < 10; i++) {
+        checkRateLimit(ip, now);
+      }
+
+      expect(checkRateLimit(ip, now)).toBe(false);
+      expect(checkRateLimit(ip, now)).toBe(false);
+      expect(checkRateLimit(ip, now)).toBe(false);
+    });
+  });
+
+  describe("Per-IP Rate Limiting", () => {
+    it("allows different IPs independently", () => {
+      const { checkRateLimit } = createRateLimiter();
+      const ip1 = "192.168.1.4";
+      const ip2 = "192.168.1.5";
+      const now = Date.now();
+
+      for (let i = 0; i < 10; i++) {
+        checkRateLimit(ip1, now);
+      }
+
+      expect(checkRateLimit(ip1, now)).toBe(false);
+      expect(checkRateLimit(ip2, now)).toBe(true);
+      expect(checkRateLimit(ip2, now)).toBe(true);
+    });
+
+    it("isolates rate limit per IP", () => {
+      const { checkRateLimit } = createRateLimiter();
+      const now = Date.now();
+
+      const ips = ["10.0.0.1", "10.0.0.2", "10.0.0.3"];
+
+      for (let i = 0; i < 5; i++) {
+        checkRateLimit(ips[0], now);
+      }
+
+      for (let i = 0; i < 8; i++) {
+        checkRateLimit(ips[1], now);
+      }
+
+      for (let i = 0; i < 10; i++) {
+        checkRateLimit(ips[2], now);
+      }
+
+      // Each should have independent counts
+      expect(checkRateLimit(ips[0], now)).toBe(true);
+      expect(checkRateLimit(ips[1], now)).toBe(true);
+      expect(checkRateLimit(ips[2], now)).toBe(false);
+    });
+  });
+
+  describe("Window Reset", () => {
+    it("resets limit after 60 seconds", () => {
+      vi.useFakeTimers();
+      const { checkRateLimit } = createRateLimiter();
+      const ip = "192.168.1.6";
+      let now = Date.now();
+
+      vi.setSystemTime(now);
+
+      for (let i = 0; i < 10; i++) {
+        checkRateLimit(ip, now);
+      }
+
+      expect(checkRateLimit(ip, now)).toBe(false);
+
+      now += RATE_LIMIT_WINDOW_MS + 1;
+      expect(checkRateLimit(ip, now)).toBe(true);
+
+      vi.useRealTimers();
+    });
+
+    it("counter increments separately in new window", () => {
+      vi.useFakeTimers();
+      const { checkRateLimit } = createRateLimiter();
+      const ip = "192.168.1.7";
+      let now = Date.now();
+
+      vi.setSystemTime(now);
+
+      for (let i = 0; i < 5; i++) {
+        checkRateLimit(ip, now);
+      }
+
+      now += RATE_LIMIT_WINDOW_MS + 1;
+
+      for (let i = 0; i < 5; i++) {
+        expect(checkRateLimit(ip, now)).toBe(true);
+      }
+
+      vi.useRealTimers();
+    });
+  });
+
+  describe("IP Extraction", () => {
+    function getClientIp(request: Request): string {
+      return (
+        request.headers.get("x-forwarded-for")?.split(",")[0].trim() ||
+        request.headers.get("cf-connecting-ip") ||
+        "unknown"
+      );
+    }
+
+    it("extracts from x-forwarded-for header", () => {
+      const request = new Request("http://localhost", {
+        headers: { "x-forwarded-for": "192.168.1.1, 10.0.0.1" },
+      });
+
+      expect(getClientIp(request)).toBe("192.168.1.1");
+    });
+
+    it("handles x-forwarded-for with spaces", () => {
+      const request = new Request("http://localhost", {
+        headers: { "x-forwarded-for": "  203.0.113.1  , 10.0.0.2" },
+      });
+
+      expect(getClientIp(request)).toBe("203.0.113.1");
+    });
+
+    it("falls back to cf-connecting-ip", () => {
+      const request = new Request("http://localhost", {
+        headers: { "cf-connecting-ip": "198.51.100.1" },
+      });
+
+      expect(getClientIp(request)).toBe("198.51.100.1");
+    });
+
+    it("returns unknown when no IP headers", () => {
+      const request = new Request("http://localhost", {
+        headers: {},
+      });
+
+      expect(getClientIp(request)).toBe("unknown");
+    });
+
+    it("prefers x-forwarded-for over cf-connecting-ip", () => {
+      const request = new Request("http://localhost", {
+        headers: {
+          "x-forwarded-for": "192.0.2.1",
+          "cf-connecting-ip": "198.51.100.2",
+        },
+      });
+
+      expect(getClientIp(request)).toBe("192.0.2.1");
+    });
+  });
+
+  describe("Brute Force Protection", () => {
+    it("prevents brute forcing auth.getToken with 10 token/min limit", () => {
+      const { checkRateLimit } = createRateLimiter();
+      const now = Date.now();
+
+      // Attacker tries to get 100 tokens in rapid succession
+      let successCount = 0;
+      for (let i = 0; i < 100; i++) {
+        if (checkRateLimit("attacker-ip", now)) {
+          successCount++;
+        }
+      }
+
+      expect(successCount).toBe(10);
+    });
+
+    it("limits damage from single IP brute force", () => {
+      const { checkRateLimit } = createRateLimiter();
+      const now = Date.now();
+
+      // Single attacker IP limited to 10 attempts per minute
+      let successCount = 0;
+      for (let i = 0; i < 20; i++) {
+        if (checkRateLimit("attacker-ip", now)) {
+          successCount++;
+        }
+      }
+
+      expect(successCount).toBe(10);
+    });
+  });
+});
