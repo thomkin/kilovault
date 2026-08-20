@@ -18,6 +18,19 @@ vi.mock("src/db", () => ({
   },
 }));
 
+// Mock encryption to pass through values (not actually encrypting in tests)
+vi.mock("../../crypto/encryption", () => ({
+  encrypt: vi.fn((plaintext: string) => ({
+    ciphertext: plaintext,
+    iv: "mock-iv",
+    authTag: "mock-tag",
+    salt: "mock-salt",
+  })),
+  decrypt: vi.fn((encrypted: any) => encrypted.ciphertext),
+  encryptedDataToString: vi.fn((data: any) => JSON.stringify(data)),
+  stringToEncryptedData: vi.fn((str: string) => JSON.parse(str)),
+}));
+
 import { db } from "src/db";
 
 describe("vault.get Security", () => {
@@ -48,10 +61,16 @@ describe("vault.get Security", () => {
   describe("User Isolation", () => {
     it("filters results by userId", async () => {
       const mockDb = db as any;
+      const encryptedValue = JSON.stringify({
+        ciphertext: "secret-data",
+        iv: "mock-iv",
+        authTag: "mock-tag",
+        salt: "mock-salt",
+      });
       mockDb.selectFrom.mockReturnValue(mockDb);
       mockDb.where.mockReturnValue(mockDb);
       mockDb.select.mockReturnValue(mockDb);
-      mockDb.executeTakeFirst.mockResolvedValue({ value: "secret-data" });
+      mockDb.executeTakeFirst.mockResolvedValue({ value: encryptedValue });
       mockDb.insertInto.mockReturnValue(mockDb);
       mockDb.values.mockReturnValue(mockDb);
       mockDb.execute.mockResolvedValue({});
@@ -133,10 +152,16 @@ describe("vault.get Security", () => {
   describe("Audit Logging", () => {
     it("logs every vault.get operation", async () => {
       const mockDb = db as any;
+      const encryptedValue = JSON.stringify({
+        ciphertext: "secret",
+        iv: "mock-iv",
+        authTag: "mock-tag",
+        salt: "mock-salt",
+      });
       mockDb.selectFrom.mockReturnValue(mockDb);
       mockDb.where.mockReturnValue(mockDb);
       mockDb.select.mockReturnValue(mockDb);
-      mockDb.executeTakeFirst.mockResolvedValue({ value: "secret" });
+      mockDb.executeTakeFirst.mockResolvedValue({ value: encryptedValue });
       mockDb.insertInto.mockReturnValue(mockDb);
       mockDb.values.mockReturnValue(mockDb);
       mockDb.execute.mockResolvedValue({});
@@ -192,11 +217,12 @@ describe("vault.set Security", () => {
       await vaultSetService.handler({ key: "db-password", value: "secret123" }, ctx);
 
       expect(mockDb.insertInto).toHaveBeenCalledWith("vault");
-      expect(mockDb.values).toHaveBeenCalledWith({
-        key: "db-password",
-        value: "secret123",
-        userId: "user-123",
-      });
+      // Verify that values() was called with correct key and userId (value is encrypted)
+      expect(mockDb.values).toHaveBeenCalled();
+      const callArgs = mockDb.values.mock.calls[0][0];
+      expect(callArgs.key).toBe("db-password");
+      expect(callArgs.userId).toBe("user-123");
+      expect(typeof callArgs.value).toBe("string"); // Encrypted value
     });
 
     it("updates only user's own secrets", async () => {
@@ -240,11 +266,12 @@ describe("vault.set Security", () => {
 
       await vaultSetService.handler({ key: "shared-key", value: "user1-secret" }, user1Ctx);
 
-      expect(mockDb.values).toHaveBeenCalledWith({
-        key: "shared-key",
-        value: "user1-secret",
-        userId: "user-1",
-      });
+      // Verify that values() was called with correct key and userId (value is encrypted)
+      expect(mockDb.values).toHaveBeenCalled();
+      const callArgs = mockDb.values.mock.calls[0][0];
+      expect(callArgs.key).toBe("shared-key");
+      expect(callArgs.userId).toBe("user-1");
+      expect(typeof callArgs.value).toBe("string"); // Encrypted value
     });
   });
 
@@ -285,7 +312,12 @@ describe("vault.set Security", () => {
       await vaultSetService.handler({ key: "test-key", value: "test-value" }, ctx);
 
       expect(mockDb.insertInto).toHaveBeenCalledWith("history");
-      expect(mockDb.values).toHaveBeenCalledWith({
+      // values() is called twice: once for vault insert, once for history insert
+      // Check that the history insert call has the right parameters
+      const calls = mockDb.values.mock.calls;
+      const historyCall = calls.find((call: any) => call[0].type === "set");
+      expect(historyCall).toBeDefined();
+      expect(historyCall[0]).toEqual({
         key: "test-key",
         userId: "user-123",
         type: "set",

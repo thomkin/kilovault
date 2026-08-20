@@ -1,10 +1,10 @@
-import type { ServiceDefinition, RpcContext } from "@crunch/types/service";
+import type { ServiceDefinition } from "@crunch/types/service";
 import { db } from "src/db";
 import { decrypt, stringToEncryptedData } from "../../crypto/encryption";
 
 export interface Request {
+  userId: string;
   key: string;
-  clientSecret?: string;
 }
 
 export interface Response {
@@ -12,10 +12,10 @@ export interface Response {
 }
 
 export const service: ServiceDefinition<Request, Response> = {
-  method: "vault.get",
+  method: "vault.admin.get",
   isPublic: false,
-  requiredPermission: ["vault.get"],
-  handler: async (req: Request, ctx: RpcContext): Promise<Response> => {
+  requiredPermission: ["admin"],
+  handler: async (req: Request): Promise<Response> => {
     const VAULT_MASTER_PASSWORD = process.env.VAULT_MASTER_PASSWORD;
     if (!VAULT_MASTER_PASSWORD) {
       throw new Error("VAULT_MASTER_PASSWORD environment variable not set");
@@ -23,7 +23,7 @@ export const service: ServiceDefinition<Request, Response> = {
 
     const result = await db
       .selectFrom("vault")
-      .where("userId", "=", ctx.userId)
+      .where("userId", "=", req.userId)
       .where("key", "=", req.key)
       .select("value")
       .executeTakeFirst();
@@ -32,7 +32,7 @@ export const service: ServiceDefinition<Request, Response> = {
       .insertInto("history")
       .values({
         key: req.key,
-        userId: ctx.userId,
+        userId: req.userId,
         type: "get",
       })
       .execute();
@@ -42,16 +42,8 @@ export const service: ServiceDefinition<Request, Response> = {
     }
 
     try {
-      // Decrypt server-side encryption (master password)
       const encrypted = stringToEncryptedData(result.value);
-      let decryptedValue = decrypt(encrypted, VAULT_MASTER_PASSWORD);
-
-      // Decrypt client-side E2E encryption if clientSecret provided
-      if (req.clientSecret) {
-        const clientEncrypted = stringToEncryptedData(decryptedValue);
-        decryptedValue = decrypt(clientEncrypted, req.clientSecret);
-      }
-
+      const decryptedValue = decrypt(encrypted, VAULT_MASTER_PASSWORD);
       return { value: decryptedValue };
     } catch (error) {
       console.error("Error decrypting vault value:", error);
@@ -59,14 +51,12 @@ export const service: ServiceDefinition<Request, Response> = {
     }
   },
   validation: (input: Request) => {
-    if (!input || !input.key || typeof input.key !== "string") {
+    if (!input || !input.userId || typeof input.userId !== "string") {
       return null;
     }
-
-    const result: Request = { key: input.key };
-    if (input.clientSecret && typeof input.clientSecret === "string") {
-      result.clientSecret = input.clientSecret;
+    if (!input.key || typeof input.key !== "string") {
+      return null;
     }
-    return result;
+    return { userId: input.userId, key: input.key };
   },
 };

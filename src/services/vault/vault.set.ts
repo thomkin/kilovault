@@ -1,9 +1,11 @@
 import type { ServiceDefinition, RpcContext } from "@crunch/types/service";
 import { db } from "src/db";
+import { encrypt, encryptedDataToString } from "../../crypto/encryption";
 
 export interface Request {
   key: string;
   value: string;
+  clientSecret?: string;
 }
 
 export interface Response {}
@@ -14,6 +16,22 @@ export const service: ServiceDefinition<Request, Response> = {
   isPublic: false,
   handler: async (req: Request, ctx: RpcContext): Promise<Response> => {
     try {
+      const VAULT_MASTER_PASSWORD = process.env.VAULT_MASTER_PASSWORD;
+      if (!VAULT_MASTER_PASSWORD) {
+        throw new Error("VAULT_MASTER_PASSWORD environment variable not set");
+      }
+
+      let valueToStore = req.value;
+
+      // Client-side E2E encryption (optional)
+      if (req.clientSecret) {
+        valueToStore = encryptedDataToString(encrypt(valueToStore, req.clientSecret));
+      }
+
+      // Server-side encryption with master password
+      const encrypted = encrypt(valueToStore, VAULT_MASTER_PASSWORD);
+      const encryptedValue = encryptedDataToString(encrypted);
+
       const existing = await db
         .selectFrom("vault")
         .select("key")
@@ -24,7 +42,7 @@ export const service: ServiceDefinition<Request, Response> = {
       if (existing) {
         await db
           .updateTable("vault")
-          .set({ value: req.value })
+          .set({ value: encryptedValue })
           .where("key", "=", req.key)
           .where("userId", "=", ctx.userId)
           .execute();
@@ -33,7 +51,7 @@ export const service: ServiceDefinition<Request, Response> = {
           .insertInto("vault")
           .values({
             key: req.key,
-            value: req.value,
+            value: encryptedValue,
             userId: ctx.userId,
           })
           .execute();
@@ -57,6 +75,11 @@ export const service: ServiceDefinition<Request, Response> = {
     if (!req || !req.key || !req.value) {
       return null;
     }
-    return req;
+
+    const result: Request = { key: req.key, value: req.value };
+    if (req.clientSecret && typeof req.clientSecret === "string") {
+      result.clientSecret = req.clientSecret;
+    }
+    return result;
   },
 };
