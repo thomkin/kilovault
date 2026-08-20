@@ -1,4 +1,5 @@
 {
   "serviceDirectories": ["src/services"],
-  "tsOutDir": "build/crunch.ts"
+  "tsOutDir": "build/crunch.ts",
+  "clientOutDir": "cli/src/generated"
 }

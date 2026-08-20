@@ -12,7 +12,8 @@
     "dev": "nodemon --watch src --ext ts --exec \"pnpm run crunch && tsx --env-file=.env src/index.ts\"",
     "migrate": "tsx --env-file=.env scripts/migrate.ts",
     "migrate:prod": "tsx --env-file=.env.production scripts/migrate.ts",
-    "dev1": "pnpm run crunch && tsx --watch --env-file=.env src/index.ts"
+    "dev1": "pnpm run crunch && tsx --watch --env-file=.env src/index.ts",
+    "cli": "pnpm --loglevel=error --filter kilovault-cli --silent dev"
   },
   "keywords": [],
   "author": "",
@@ -22,6 +23,7 @@
     "@bunny.net/edgescript-sdk": "^0.12.1",
     "@libsql/client": "^0.17.0",
     "@libsql/kysely-libsql": "^0.4.1",
+    "commander": "^12.1.0",
     "crunch.ts": "github:thomkin/crunch.ts#f8878d92618ed42473737ee24bc8b9b3e659c43d",
     "kysely": "^0.28.12",
     "typia": "^12.0.1"
@@ -38,10 +40,8 @@
     "typescript": "^5.9.3",
     "vitest": "^4.1.0"
   },
-  "pnpm": {
-    "overrides": {
-      "@libsql/core": "0.17.0",
-      "@libsql/client": "0.17.0"
-    }
+  "overrides": {
+    "@libsql/core": "0.17.0",
+    "@libsql/client": "0.17.0"
   }
 }

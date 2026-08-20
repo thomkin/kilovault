@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kilovault Admin Dashboard</title>
+  <script defer src="https://cdn.tailwindcss.com"></script>
+  <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  <style>
+    :root {
+      --color-primary: #6366f1;
+      --color-primary-dark: #4f46e5;
+      --color-accent: #ec4899;
+      --color-success: #10b981;
+      --color-warning: #f59e0b;
+      --color-danger: #ef4444;
+    }
+
+    [data-theme="dark"] {
+      --color-bg-primary: #0f172a;
+      --color-bg-secondary: #1e293b;
+      --color-bg-tertiary: #334155;
+      --color-text-primary: #f1f5f9;
+      --color-text-secondary: #cbd5e1;
+      --color-border: #475569;
+    }
+
+    body {
+      background-color: var(--color-bg-primary);
+      color: var(--color-text-primary);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+
+    .sidebar-nav a {
+      @apply px-4 py-3 rounded-lg transition-all duration-200 flex items-center gap-3 text-sm font-medium;
+    }
+
+    .sidebar-nav a:hover {
+      @apply bg-indigo-500/10 text-indigo-400;
+    }
+
+    .sidebar-nav a.active {
+      @apply bg-indigo-500 text-white;
+    }
+
+    .stat-card {
+      @apply bg-slate-800/50 border border-slate-700 rounded-lg p-6 hover:border-indigo-500/50 transition-colors;
+    }
+
+    .btn-primary {
+      @apply px-4 py-2 bg-indigo-500 hover:bg-indigo-600 text-white rounded-lg transition-colors font-medium;
+    }
+
+    .btn-secondary {
+      @apply px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition-colors font-medium;
+    }
+
+    .btn-danger {
+      @apply px-4 py-2 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-lg transition-colors font-medium border border-red-500/30;
+    }
+
+    .input-field {
+      @apply w-full bg-slate-700/50 border border-slate-600 rounded-lg px-4 py-2 text-white placeholder-slate-400 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all;
+    }
+
+    .table-row {
+      @apply border-b border-slate-700 hover:bg-slate-800/50 transition-colors;
+    }
+
+    .badge {
+      @apply inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium;
+    }
+
+    .badge-success {
+      @apply bg-green-500/20 text-green-400;
+    }
+
+    .badge-warning {
+      @apply bg-yellow-500/20 text-yellow-400;
+    }
+
+    .badge-danger {
+      @apply bg-red-500/20 text-red-400;
+    }
+
+    .modal-overlay {
+      @apply fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50;
+    }
+
+    .modal-content {
+      @apply bg-slate-800 rounded-2xl border border-slate-700 max-w-lg w-full mx-4 shadow-2xl;
+    }
+  </style>
+</head>
+<body class="bg-slate-950">
+  <div x-data="dashboardApp()" class="flex h-screen">
+    <!-- Sidebar -->
+    <aside class="w-64 bg-slate-900 border-r border-slate-700 flex flex-col">
+      <!-- Logo -->
+      <div class="p-6 border-b border-slate-700">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-lg bg-indigo-500 flex items-center justify-center font-bold text-white">K</div>
+          <div>
+            <h1 class="font-bold text-white">Kilovault</h1>
+            <p class="text-xs text-slate-400">Admin Panel</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Navigation -->
+      <nav class="flex-1 p-4 space-y-2 sidebar-nav">
+        <a href="#" @click="currentPage = 'dashboard'" :class="currentPage === 'dashboard' ? 'active' : ''">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-3m0 0l7-4 7 4M5 9v10a1 1 0 001 1h12a1 1 0 001-1V9m-9 13l4-8m4 8V9m0 0L9 5"/></svg>
+          Dashboard
+        </a>
+        <a href="#" @click="currentPage = 'vault'" :class="currentPage === 'vault' ? 'active' : ''">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+          Vault Secrets
+        </a>
+        <a href="#" @click="currentPage = 'tokens'" :class="currentPage === 'tokens' ? 'active' : ''">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/></svg>
+          API Tokens
+        </a>
+        <a href="#" @click="currentPage = 'users'" :class="currentPage === 'users' ? 'active' : ''">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 12H9m6 0a6 6 0 11-12 0 6 6 0 0112 0z"/></svg>
+          Users & Permissions
+        </a>
+        <a href="#" @click="currentPage = 'logs'" :class="currentPage === 'logs' ? 'active' : ''">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+          Audit Logs
+        </a>
+        <a href="#" @click="currentPage = 'settings'" :class="currentPage === 'settings' ? 'active' : ''">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/></svg>
+          Settings
+        </a>
+      </nav>
+
+      <!-- User Profile -->
+      <div class="p-4 border-t border-slate-700">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-full bg-indigo-500 flex items-center justify-center text-white font-bold text-sm">A</div>
+          <div class="flex-1 min-w-0">
+            <p class="text-sm font-medium truncate">Admin User</p>
+            <p class="text-xs text-slate-400 truncate">admin@kilovault.io</p>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 flex flex-col overflow-hidden">
+      <!-- Header -->
+      <header class="bg-slate-800 border-b border-slate-700 px-8 py-4 flex items-center justify-between">
+        <h2 class="text-xl font-bold" x-text="getPageTitle()"></h2>
+        <div class="flex items-center gap-4">
+          <button @click="showNotifications = !showNotifications" class="relative p-2 text-slate-400 hover:text-white transition-colors">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+            <span class="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+          </button>
+        </div>
+      </header>
+
+      <!-- Content Area -->
+      <div class="flex-1 overflow-auto">
+        <div class="p-8">
+          <!-- Dashboard Page -->
+          <div x-show="currentPage === 'dashboard'" class="space-y-8">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <div class="stat-card">
+                <div class="flex justify-between items-start">
+                  <div>
+                    <p class="text-slate-400 text-sm mb-1">Total Secrets</p>
+                    <p class="text-3xl font-bold text-white">247</p>
+                  </div>
+                  <div class="p-3 bg-indigo-500/20 rounded-lg">
+                    <svg class="w-6 h-6 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                  </div>
+                </div>
+                <p class="text-xs text-green-400 mt-4">+12 this month</p>
+              </div>
+
+              <div class="stat-card">
+                <div class="flex justify-between items-start">
+                  <div>
+                    <p class="text-slate-400 text-sm mb-1">Active Users</p>
+                    <p class="text-3xl font-bold text-white">18</p>
+                  </div>
+                  <div class="p-3 bg-green-500/20 rounded-lg">
+                    <svg class="w-6 h-6 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 12H9m6 0a6 6 0 11-12 0 6 6 0 0112 0z"/></svg>
+                  </div>
+                </div>
+                <p class="text-xs text-green-400 mt-4">All online</p>
+              </div>
+
+              <div class="stat-card">
+                <div class="flex justify-between items-start">
+                  <div>
+                    <p class="text-slate-400 text-sm mb-1">API Requests</p>
+                    <p class="text-3xl font-bold text-white">12.4K</p>
+                  </div>
+                  <div class="p-3 bg-purple-500/20 rounded-lg">
+                    <svg class="w-6 h-6 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                  </div>
+                </div>
+                <p class="text-xs text-slate-400 mt-4">Last 24 hours</p>
+              </div>
+
+              <div class="stat-card">
+                <div class="flex justify-between items-start">
+                  <div>
+                    <p class="text-slate-400 text-sm mb-1">System Health</p>
+                    <p class="text-3xl font-bold text-white">99.9%</p>
+                  </div>
+                  <div class="p-3 bg-emerald-500/20 rounded-lg">
+                    <svg class="w-6 h-6 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                  </div>
+                </div>
+                <p class="text-xs text-green-400 mt-4">All systems operational</p>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <!-- Recent Activity -->
+              <div class="bg-slate-800/50 border border-slate-700 rounded-lg p-6">
+                <h3 class="text-lg font-bold mb-4">Recent Activity</h3>
+                <div class="space-y-4">
+                  <div class="flex items-start gap-4 pb-4 border-b border-slate-700">
+                    <div class="w-10 h-10 rounded-full bg-green-500/20 flex items-center justify-center flex-shrink-0">
+                      <svg class="w-5 h-5 text-green-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                      <p class="text-sm font-medium">Secret accessed</p>
+                      <p class="text-xs text-slate-400">db_password by app-01</p>
+                      <p class="text-xs text-slate-500 mt-1">2 minutes ago</p>
+                    </div>
+                  </div>
+                  <div class="flex items-start gap-4 pb-4 border-b border-slate-700">
+                    <div class="w-10 h-10 rounded-full bg-indigo-500/20 flex items-center justify-center flex-shrink-0">
+                      <svg class="w-5 h-5 text-indigo-400" fill="currentColor" viewBox="0 0 20 20"><path d="M5.5 13a3.5 3.5 0 01-.369-6.98 4 4 0 117.753-1.3A4.5 4.5 0 1113.5 13H11V9.413l1.293 1.293a1 1 0 001.414-1.414l-3-3a1 1 0 00-1.414 0l-3 3a1 1 0 001.414 1.414L9 9.414V13H5.5z"/></svg>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                      <p class="text-sm font-medium">Token created</p>
+                      <p class="text-xs text-slate-400">api-token-234 for provisioning-sys</p>
+                      <p class="text-xs text-slate-500 mt-1">5 minutes ago</p>
+                    </div>
+                  </div>
+                  <div class="flex items-start gap-4">
+                    <div class="w-10 h-10 rounded-full bg-yellow-500/20 flex items-center justify-center flex-shrink-0">
+                      <svg class="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                      <p class="text-sm font-medium">Failed auth attempt</p>
+                      <p class="text-xs text-slate-400">Invalid credentials from 192.168.1.100</p>
+                      <p class="text-xs text-slate-500 mt-1">1 hour ago</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Quick Actions -->
+              <div class="bg-slate-800/50 border border-slate-700 rounded-lg p-6">
+                <h3 class="text-lg font-bold mb-4">Quick Actions</h3>
+                <div class="space-y-3">
+                  <button @click="currentPage = 'vault'; showNewSecretModal = true" class="w-full flex items-center gap-3 p-3 rounded-lg bg-slate-700/50 hover:bg-slate-700 transition-colors text-left">
+                    <svg class="w-5 h-5 text-indigo-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                    <div class="flex-1">
+                      <p class="text-sm font-medium">Create New Secret</p>
+                      <p class="text-xs text-slate-400">Add a new secret to the vault</p>
+                    </div>
+                  </button>
+                  <button @click="currentPage = 'tokens'; showNewTokenModal = true" class="w-full flex items-center gap-3 p-3 rounded-lg bg-slate-700/50 hover:bg-slate-700 transition-colors text-left">
+                    <svg class="w-5 h-5 text-green-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                    <div class="flex-1">
+                      <p class="text-sm font-medium">Generate API Token</p>
+                      <p class="text-xs text-slate-400">Create new token for integration</p>
+                    </div>
+                  </button>
+                  <button @click="currentPage = 'users'; showNewUserModal = true" class="w-full flex items-center gap-3 p-3 rounded-lg bg-slate-700/50 hover:bg-slate-700 transition-colors text-left">
+                    <svg class="w-5 h-5 text-purple-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                    <div class="flex-1">
+                      <p class="text-sm font-medium">Add User Account</p>
+                      <p class="text-xs text-slate-400">Invite new team member</p>
+                    </div>
+                  </button>
+                  <button @click="currentPage = 'settings'" class="w-full flex items-center gap-3 p-3 rounded-lg bg-slate-700/50 hover:bg-slate-700 transition-colors text-left">
+                    <svg class="w-5 h-5 text-slate-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/></svg>
+                    <div class="flex-1">
+                      <p class="text-sm font-medium">View Configuration</p>
+                      <p class="text-xs text-slate-400">Review system settings</p>
+                    </div>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Vault Secrets Page -->
+          <div x-show="currentPage === 'vault'" class="space-y-6">
+            <div class="flex justify-between items-center">
+              <div class="flex-1">
+                <input type="text" placeholder="Search secrets..." x-model="searchQuery" class="input-field max-w-sm">
+              </div>
+              <button @click="showNewSecretModal = true" class="btn-primary">+ New Secret</button>
+            </div>
+
+            <div class="bg-slate-800/50 border border-slate-700 rounded-lg overflow-hidden">
+              <table class="w-full">
+                <thead>
+                  <tr class="border-b border-slate-700 bg-slate-900/50">
+                    <th class="px-6 py-3 text-left text-sm font-semibold text-slate-300">Key</th>
+                    <th class="px-6 py-3 text-left text-sm font-semibold text-slate-300">User</th>
+                    <th class="px-6 py-3 text-left text-sm font-semibold text-slate-300">Created</th>
+                    <th class="px-6 py-3 text-left text-sm font-semibold text-slate-300">Status</th>
+                    <th class="px-6 py-3 text-left text-sm font-semibold text-slate-300">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <template x-for="secret in secrets" :key="secret.id">
+                    <tr class="table-row">
+                      <td class="px-6 py-4 text-sm font-medium" x-text="secret.key"></td>
+                      <td class="px-6 py-4 text-sm text-slate-300" x-text="secret.user"></td>
+                      <td class="px-6 py-4 text-sm text-slate-400" x-text="secret.created"></td>
+                      <td class="px-6 py-4 text-sm">
+                        <span class="badge badge-success">Active</span>
+                      </td>
+                      <td class="px-6 py-4 text-sm flex gap-2">
+                        <button class="text-indigo-400 hover:text-indigo-300 transition-colors">View</button>
+                        <button class="text-slate-400 hover:text-slate-300 transition-colors">Edit</button>
+                        <button class="text-red-400 hover:text-red-300 transition-colors">Delete</button>
+                      </td>
+                    </tr>
+                  </template>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- API Tokens Page -->
+          <div x-show="currentPage === 'tokens'" class="space-y-6">
+            <div class="flex justify-between items-center">
+              <div class="flex-1">
+                <input type="text" placeholder="Search tokens..." class="input-field max-w-sm">
+              </div>
+              <button @click="showNewTokenModal = true" class="btn-primary">+ Generate Token</button>
+            </div>
+
+            <div class="space-y-4">
+              <template x-for="token in tokens" :key="token.id">
+                <div class="bg-slate-800/50 border border-slate-700 rounded-lg p-6 hover:border-indigo-500/50 transition-colors">
+                  <div class="flex justify-between items-start mb-4">
+                    <div>
+                      <h3 class="text-lg font-semibold" x-text="token.name"></h3>
+                      <p class="text-sm text-slate-400 mt-1" x-text="'Created ' + token.created"></p>
+                    </div>
+                    <span :class="'badge ' + (token.status === 'active' ? 'badge-success' : 'badge-warning')" x-text="token.status"></span>
+                  </div>
+                  <div class="bg-slate-900/50 rounded p-3 mb-4 font-mono text-xs text-slate-300 truncate" x-text="token.value"></div>
+                  <div class="flex gap-2">
+                    <button class="text-indigo-400 hover:text-indigo-300 transition-colors text-sm font-medium">Copy</button>
+                    <button class="text-slate-400 hover:text-slate-300 transition-colors text-sm font-medium">View Details</button>
+                    <button class="text-red-400 hover:text-red-300 transition-colors text-sm font-medium ml-auto">Revoke</button>
+                  </div>
+                </div>
+              </template>
+            </div>
+          </div>
+
+          <!-- Users & Permissions Page -->
+          <div x-show="currentPage === 'users'" class="space-y-6">
+            <div class="flex justify-between items-center">
+              <div class="flex-1">
+                <input type="text" placeholder="Search users..." x-model="searchQuery" class="input-field max-w-sm">
+              </div>
+              <button @click="showNewUserModal = true" class="btn-primary">+ Add User</button>
+            </div>
+
+            <div class="bg-slate-800/50 border border-slate-700 rounded-lg overflow-hidden">
+              <table class="w-full">
+                <thead>
+                  <tr class="border-b border-slate-700 bg-slate-900/50">
+                    <th class="px-6 py-3 text-left text-sm font-semibold text-slate-300">Name</th>
+                    <th class="px-6 py-3 text-left text-sm font-semibold text-slate-300">Email</th>
+                    <th class="px-6 py-3 text-left text-sm font-semibold text-slate-300">Role</th>
+                    <th class="px-6 py-3 text-left text-sm font-semibold text-slate-300">Status</th>
+                    <th class="px-6 py-3 text-left text-sm font-semibold text-slate-300">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <template x-for="user in users" :key="user.id">
+                    <tr class="table-row">
+                      <td class="px-6 py-4 text-sm font-medium" x-text="user.name"></td>
+                      <td class="px-6 py-4 text-sm text-slate-300" x-text="user.email"></td>
+                      <td class="px-6 py-4 text-sm">
+                        <span class="badge badge-success" x-text="user.role"></span>
+                      </td>
+                      <td class="px-6 py-4 text-sm">
+                        <span class="badge badge-success">Active</span>
+                      </td>
+                      <td class="px-6 py-4 text-sm flex gap-2">
+                        <button class="text-indigo-400 hover:text-indigo-300 transition-colors">Edit</button>
+                        <button class="text-red-400 hover:text-red-300 transition-colors">Remove</button>
+                      </td>
+                    </tr>
+                  </template>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Audit Logs Page -->
+          <div x-show="currentPage === 'logs'" class="space-y-6">
+            <div class="flex gap-4">
+              <input type="text" placeholder="Search logs..." class="input-field flex-1">
+              <select class="input-field max-w-xs">
+                <option>All Events</option>
+                <option>Secret Access</option>
+                <option>Token Creation</option>
+                <option>User Management</option>
+              </select>
+            </div>
+
+            <div class="space-y-2">
+              <template x-for="log in auditLogs" :key="log.id">
+                <div class="bg-slate-800/50 border border-slate-700 rounded-lg p-4 hover:border-indigo-500/50 transition-colors">
+                  <div class="flex items-start justify-between">
+                    <div class="flex-1">
+                      <p class="text-sm font-medium" x-text="log.action"></p>
+                      <p class="text-xs text-slate-400 mt-1" x-text="log.description"></p>
+                      <p class="text-xs text-slate-500 mt-2" x-text="log.timestamp"></p>
+                    </div>
+                    <span :class="'badge ' + (log.status === 'success' ? 'badge-success' : 'badge-danger')" x-text="log.status"></span>
+                  </div>
+                </div>
+              </template>
+            </div>
+          </div>
+
+          <!-- Settings Page -->
+          <div x-show="currentPage === 'settings'" class="space-y-6 max-w-2xl">
+            <div class="bg-slate-800/50 border border-slate-700 rounded-lg p-6">
+              <h3 class="text-lg font-bold mb-6">Configuration</h3>
+              <div class="space-y-4">
+                <div>
+                  <label class="block text-sm font-medium mb-2">JWT Secret</label>
+                  <input type="password" placeholder="••••••••••••••••" class="input-field" value="••••••••••••••••">
+                  <p class="text-xs text-slate-400 mt-2">Secret key for signing JWT tokens</p>
+                </div>
+                <div>
+                  <label class="block text-sm font-medium mb-2">Auth Secret</label>
+                  <input type="password" placeholder="••••••••••••••••" class="input-field" value="••••••••••••••••">
+                  <p class="text-xs text-slate-400 mt-2">Secret for obtaining authentication tokens</p>
+                </div>
+                <div>
+                  <label class="block text-sm font-medium mb-2">Allowed Origins (CORS)</label>
+                  <textarea rows="3" placeholder="https://app.example.com&#10;https://api.example.com" class="input-field"></textarea>
+                  <p class="text-xs text-slate-400 mt-2">Comma-separated list of allowed CORS origins</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="bg-slate-800/50 border border-slate-700 rounded-lg p-6">
+              <h3 class="text-lg font-bold mb-6">Security</h3>
+              <div class="space-y-4">
+                <div class="flex items-center justify-between p-4 bg-slate-700/30 rounded-lg">
+                  <div>
+                    <p class="text-sm font-medium">Rate Limiting</p>
+                    <p class="text-xs text-slate-400 mt-1">10 tokens per minute per IP</p>
+                  </div>
+                  <div class="relative w-12 h-6 bg-indigo-500 rounded-full cursor-pointer">
+                    <div class="absolute right-1 top-1 w-4 h-4 bg-white rounded-full"></div>
+                  </div>
+                </div>
+                <div class="flex items-center justify-between p-4 bg-slate-700/30 rounded-lg">
+                  <div>
+                    <p class="text-sm font-medium">Token Expiration</p>
+                    <p class="text-xs text-slate-400 mt-1">Require expiration on all tokens</p>
+                  </div>
+                  <div class="relative w-12 h-6 bg-indigo-500 rounded-full cursor-pointer">
+                    <div class="absolute right-1 top-1 w-4 h-4 bg-white rounded-full"></div>
+                  </div>
+                </div>
+                <div class="flex items-center justify-between p-4 bg-slate-700/30 rounded-lg">
+                  <div>
+                    <p class="text-sm font-medium">Audit Logging</p>
+                    <p class="text-xs text-slate-400 mt-1">Log all vault access and modifications</p>
+                  </div>
+                  <div class="relative w-12 h-6 bg-indigo-500 rounded-full cursor-pointer">
+                    <div class="absolute right-1 top-1 w-4 h-4 bg-white rounded-full"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="flex gap-4">
+              <button class="btn-primary">Save Changes</button>
+              <button class="btn-secondary">Discard</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- New Secret Modal -->
+  <div x-show="showNewSecretModal" class="modal-overlay" @click.self="showNewSecretModal = false">
+    <div class="modal-content">
+      <div class="flex items-center justify-between p-6 border-b border-slate-700">
+        <h3 class="text-xl font-bold">Create New Secret</h3>
+        <button @click="showNewSecretModal = false" class="text-slate-400 hover:text-white">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <div class="p-6 space-y-4">
+        <div>
+          <label class="block text-sm font-medium mb-2">Secret Key</label>
+          <input type="text" placeholder="e.g., database_password" class="input-field">
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-2">Secret Value</label>
+          <textarea rows="4" placeholder="Enter secret value" class="input-field"></textarea>
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-2">Description (optional)</label>
+          <input type="text" placeholder="What is this secret for?" class="input-field">
+        </div>
+      </div>
+      <div class="flex gap-3 p-6 border-t border-slate-700">
+        <button @click="showNewSecretModal = false" class="btn-secondary flex-1">Cancel</button>
+        <button class="btn-primary flex-1">Create Secret</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- New Token Modal -->
+  <div x-show="showNewTokenModal" class="modal-overlay" @click.self="showNewTokenModal = false">
+    <div class="modal-content">
+      <div class="flex items-center justify-between p-6 border-b border-slate-700">
+        <h3 class="text-xl font-bold">Generate New Token</h3>
+        <button @click="showNewTokenModal = false" class="text-slate-400 hover:text-white">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <div class="p-6 space-y-4">
+        <div>
+          <label class="block text-sm font-medium mb-2">Token Name</label>
+          <input type="text" placeholder="e.g., Provisioning System" class="input-field">
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-2">Expiration</label>
+          <select class="input-field">
+            <option>30 days</option>
+            <option>90 days</option>
+            <option>1 year</option>
+            <option>Never expires</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-2">Permissions</label>
+          <div class="space-y-2">
+            <label class="flex items-center gap-2">
+              <input type="checkbox" checked class="rounded">
+              <span class="text-sm">vault.get</span>
+            </label>
+            <label class="flex items-center gap-2">
+              <input type="checkbox" class="rounded">
+              <span class="text-sm">vault.set</span>
+            </label>
+            <label class="flex items-center gap-2">
+              <input type="checkbox" class="rounded">
+              <span class="text-sm">admin</span>
+            </label>
+          </div>
+        </div>
+      </div>
+      <div class="flex gap-3 p-6 border-t border-slate-700">
+        <button @click="showNewTokenModal = false" class="btn-secondary flex-1">Cancel</button>
+        <button class="btn-primary flex-1">Generate Token</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- New User Modal -->
+  <div x-show="showNewUserModal" class="modal-overlay" @click.self="showNewUserModal = false">
+    <div class="modal-content">
+      <div class="flex items-center justify-between p-6 border-b border-slate-700">
+        <h3 class="text-xl font-bold">Add New User</h3>
+        <button @click="showNewUserModal = false" class="text-slate-400 hover:text-white">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <div class="p-6 space-y-4">
+        <div>
+          <label class="block text-sm font-medium mb-2">Full Name</label>
+          <input type="text" placeholder="John Doe" class="input-field">
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-2">Email Address</label>
+          <input type="email" placeholder="john@example.com" class="input-field">
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-2">Role</label>
+          <select class="input-field">
+            <option>Admin</option>
+            <option>Editor</option>
+            <option>Viewer</option>
+          </select>
+        </div>
+      </div>
+      <div class="flex gap-3 p-6 border-t border-slate-700">
+        <button @click="showNewUserModal = false" class="btn-secondary flex-1">Cancel</button>
+        <button class="btn-primary flex-1">Add User</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function dashboardApp() {
+      return {
+        currentPage: 'dashboard',
+        showNewSecretModal: false,
+        showNewTokenModal: false,
+        showNewUserModal: false,
+        showNotifications: false,
+        searchQuery: '',
+
+        secrets: [
+          { id: 1, key: 'db_password', user: 'app-01', created: '2026-08-19' },
+          { id: 2, key: 'api_key', user: 'provisioning-sys', created: '2026-08-18' },
+          { id: 3, key: 'github_token', user: 'ci-pipeline', created: '2026-08-17' },
+          { id: 4, key: 'aws_secret', user: 'backup-service', created: '2026-08-16' },
+          { id: 5, key: 'stripe_api_key', user: 'payment-app', created: '2026-08-15' },
+        ],
+
+        tokens: [
+          { id: 1, name: 'Provisioning System', value: 'kvt_7x9K2mN5pQ8rZ1vX3cB4fG6hJ9', created: '2 days ago', status: 'active' },
+          { id: 2, name: 'CI/CD Pipeline', value: 'kvt_9L2mK5pQ8rZ1vX3cB4fG6hJ9', created: '1 week ago', status: 'active' },
+          { id: 3, name: 'Backup Service', value: 'kvt_5M8pK2rQ9vZ4xC6eF9iJ2lM5', created: '2 weeks ago', status: 'active' },
+        ],
+
+        users: [
+          { id: 1, name: 'Admin User', email: 'admin@kilovault.io', role: 'Admin' },
+          { id: 2, name: 'John Developer', email: 'john@company.com', role: 'Editor' },
+          { id: 3, name: 'Sarah Engineer', email: 'sarah@company.com', role: 'Editor' },
+          { id: 4, name: 'Mike DevOps', email: 'mike@company.com', role: 'Admin' },
+        ],
+
+        auditLogs: [
+          { id: 1, action: 'Secret Accessed', description: 'db_password accessed by app-01', timestamp: '2026-08-19 14:32:15', status: 'success' },
+          { id: 2, action: 'Token Created', description: 'New API token created: backup-job', timestamp: '2026-08-19 10:15:42', status: 'success' },
+          { id: 3, action: 'User Added', description: 'New user sarah@company.com added as Editor', timestamp: '2026-08-19 09:21:33', status: 'success' },
+          { id: 4, action: 'Failed Auth', description: 'Invalid credentials attempt from 192.168.1.100', timestamp: '2026-08-19 08:45:12', status: 'danger' },
+          { id: 5, action: 'Secret Updated', description: 'api_key value updated', timestamp: '2026-08-18 16:33:55', status: 'success' },
+        ],
+
+        getPageTitle() {
+          const titles = {
+            dashboard: 'Dashboard',
+            vault: 'Vault Secrets',
+            tokens: 'API Tokens',
+            users: 'Users & Permissions',
+            logs: 'Audit Logs',
+            settings: 'Settings & Configuration'
+          };
+          return titles[this.currentPage] || 'Dashboard';
+        }
+      };
+    }
+  </script>
+</body>
+</html>

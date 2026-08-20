@@ -1,0 +1,25 @@
+{
+  "name": "kilovault-cli",
+  "version": "0.0.1",
+  "description": "CLI for kilovault",
+  "main": "dist/cli.js",
+  "type": "module",
+  "bin": {
+    "kilovault": "dist/cli.js"
+  },
+  "scripts": {
+    "dev": "tsx src/cli.ts",
+    "build": "pnpm --filter=.. run crunch && pnpm --filter=.. run build:client && tsc",
+    "start": "node dist/index.js"
+  },
+  "dependencies": {
+    "commander": "^12.1.0",
+    "kilovault": "workspace:*",
+    "ky": "^1.8.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.10.1",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3"
+  }
+}

@@ -24,8 +24,8 @@ async function bundle() {
     outfile: outFile,
     format: "esm",
     target: ["es2022"],
-    platform: "browser",
-    external: ["@bunny.net/edgescript-sdk"],
+    platform: "node",
+    external: ["@bunny.net/edgescript-sdk", "crypto"],
     logLevel: "info",
   });
 

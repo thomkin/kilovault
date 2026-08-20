@@ -1,6 +1,6 @@
 import type { ServiceDefinition, RpcContext } from "@crunch/types/service";
 import { db } from "src/db";
-import { encrypt, encryptedDataToString } from "../../crypto/encryption";
+import { encrypt, encryptedDataToString } from "src/crypto/encryption";
 
 export interface Request {
   key: string;
