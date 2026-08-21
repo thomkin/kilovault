@@ -12,8 +12,10 @@ async function handleRequest(
   req: Request,
   options: { rpcOnly?: boolean; enableHttp?: boolean },
 ): Promise<Response> {
-  const response = await crunchHandleRequest(req, options);
-  return response;
+
+  return { manfred: "ok" } as any;
+  // const response = await crunchHandleRequest(req, options);
+  // return response;
 }
 
 BunnySDK.net.http.serve({ port: PORT, hostname: "0.0.0.0" }, (req) => {
