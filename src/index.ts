@@ -6,16 +6,11 @@ const PORT = 5096;
 // Log startup info
 console.log("[STARTUP] Kilovault server starting");
 console.log(`[STARTUP] Environment variables configured:`);
-console.log(`  DB_URL first 4 chars: ${(process.env.DB_URL || "MISSING").substring(0, 4)}`);
-console.log(`  DB_TOKEN first 4 chars: ${(process.env.DB_TOKEN || "MISSING").substring(0, 4)}`);
-console.log(`  JWT_SECRET first 4 chars: ${(process.env.JWT_SECRET || "MISSING").substring(0, 4)}`);
-console.log(`  VAULT_MASTER_PASSWORD first 4 chars: ${(process.env.VAULT_MASTER_PASSWORD || "MISSING").substring(0, 4)}`);
+console.log(`  DB_URL: ${process.env.DB_URL ? "✓" : "✗ MISSING"}`);
+console.log(`  DB_TOKEN: ${process.env.DB_TOKEN ? "✓" : "✗ MISSING"}`);
+console.log(`  JWT_SECRET: ${process.env.JWT_SECRET ? "✓" : "✗ MISSING"}`);
+console.log(`  VAULT_MASTER_PASSWORD: ${process.env.VAULT_MASTER_PASSWORD ? "✓" : "✗ MISSING"}`);
 console.log(`  ALLOWED_ORIGINS: ${process.env.ALLOWED_ORIGINS || "* (default)"}`);
-
-// TODO: COMMENTED OUT FOR DEBUGGING - RESTORE AFTER CHECKING ENV VARS
-/*
-const response = await crunchHandleRequest(req, options);
-*/
 
 let requestCount = 0;
 
@@ -54,18 +49,6 @@ async function handleRequest(
   console.log(`[REQ #${reqId}] Headers: Content-Type=${req.headers.get("content-type")}`);
 
   try {
-    // DEBUG: Return early without processing
-    console.log(`[REQ #${reqId}] Returning debug response`);
-    return new Response(JSON.stringify({
-      status: "debug",
-      message: "Server running, env vars loaded",
-      requestId: reqId
-    }), {
-      status: 200,
-      headers: { "Content-Type": "application/json" },
-    });
-
-    /* COMMENTED OUT FOR DEBUGGING
     // Log body for RPC calls
     if (method === "POST" && req.headers.get("content-type")?.includes("application/json")) {
       try {
@@ -97,7 +80,6 @@ async function handleRequest(
       statusText: response.statusText,
       headers: newHeaders,
     });
-    */
   } catch (error) {
     console.error(`[REQ #${reqId}] Error:`, error);
     return new Response(JSON.stringify({
