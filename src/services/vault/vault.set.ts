@@ -25,11 +25,12 @@ export const service: ServiceDefinition<Request, Response> = {
 
       // Client-side E2E encryption (optional)
       if (req.clientSecret) {
-        valueToStore = encryptedDataToString(encrypt(valueToStore, req.clientSecret));
+        const encrypted = await encrypt(valueToStore, req.clientSecret);
+        valueToStore = encryptedDataToString(encrypted);
       }
 
       // Server-side encryption with master password
-      const encrypted = encrypt(valueToStore, VAULT_MASTER_PASSWORD);
+      const encrypted = await encrypt(valueToStore, VAULT_MASTER_PASSWORD);
       const encryptedValue = encryptedDataToString(encrypted);
 
       const existing = await db

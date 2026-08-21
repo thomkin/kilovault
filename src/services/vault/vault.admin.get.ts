@@ -43,7 +43,7 @@ export const service: ServiceDefinition<Request, Response> = {
 
     try {
       const encrypted = stringToEncryptedData(result.value);
-      const decryptedValue = decrypt(encrypted, VAULT_MASTER_PASSWORD);
+      const decryptedValue = await decrypt(encrypted, VAULT_MASTER_PASSWORD);
       return { value: decryptedValue };
     } catch (error) {
       console.error("Error decrypting vault value:", error);

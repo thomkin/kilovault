@@ -1,0 +1,6 @@
+# Set remote DB vars locally
+export DB_URL="libsql://01M0GHWHWJ75B2Q57GYZFX0STE-kilovault.lite.bunnydb.net/"
+export DB_TOKEN="eyJ0eXAiOiJKV1QiLCJhbGciOiJFZERTQSJ9.eyJwIjp7InJvIjpudWxsLCJydyI6eyJucyI6WyJraWxvdmF1bHQiXSwidGFncyI6bnVsbH0sInJvYSI6bnVsbCwicndhIjpudWxsLCJkZGwiOm51bGx9LCJpYXQiOjE3ODczNDM0NDl9.Ijv8KLkpgRPHz1-IY4zzmGehNuET--PQUs377KV0yYuGtbLJowCrF6DHOamnU9wDA8hUxhFXpYIQBDY_8GXgBA"
+
+# Run migration against remote
+npm run migrate:prod

@@ -20,7 +20,7 @@ export const service: ServiceDefinition<Request, Response> = {
       throw new Error("VAULT_MASTER_PASSWORD environment variable not set");
     }
 
-    const encrypted = encrypt(req.value, VAULT_MASTER_PASSWORD);
+    const encrypted = await encrypt(req.value, VAULT_MASTER_PASSWORD);
     const encryptedValue = encryptedDataToString(encrypted);
 
     const existing = await db

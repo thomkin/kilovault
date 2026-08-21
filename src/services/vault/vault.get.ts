@@ -44,12 +44,12 @@ export const service: ServiceDefinition<Request, Response> = {
     try {
       // Decrypt server-side encryption (master password)
       const encrypted = stringToEncryptedData(result.value);
-      let decryptedValue = decrypt(encrypted, VAULT_MASTER_PASSWORD);
+      let decryptedValue = await decrypt(encrypted, VAULT_MASTER_PASSWORD);
 
       // Decrypt client-side E2E encryption if clientSecret provided
       if (req.clientSecret) {
         const clientEncrypted = stringToEncryptedData(decryptedValue);
-        decryptedValue = decrypt(clientEncrypted, req.clientSecret);
+        decryptedValue = await decrypt(clientEncrypted, req.clientSecret);
       }
 
       return { value: decryptedValue };
