@@ -13,13 +13,14 @@ export const service: ServiceDefinition<Request, Response> = {
   isPublic: false,
   requiredPermission: ["admin"],
   handler: async (req: Request, ctx: RpcContext): Promise<Response> => {
-    // delete history older than 30 days
-    const count = await db
-      .deleteFrom("history")
-      .where("createdAt", "<", sql<string>`datetime('now', '-30 days')`)
-      .executeTakeFirst();
+    console.log("[HANDLER] history.cleanup called");
+    // // delete history older than 30 days
+    // const count = await db
+    //   .deleteFrom("history")
+    //   .where("createdAt", "<", sql<string>`datetime('now', '-30 days')`)
+    //   .executeTakeFirst();
 
-    return { count: Number(count?.numDeletedRows) || 0 };
+    return { count: 0 };
   },
   validation: (input: Request) => {
     return input;

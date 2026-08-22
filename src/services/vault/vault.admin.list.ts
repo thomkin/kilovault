@@ -17,15 +17,16 @@ export const service: ServiceDefinition<Request, Response> = {
   isPublic: false,
   requiredPermission: ["admin"],
   handler: async (req: Request): Promise<Response> => {
-    let query = db.selectFrom("vault").select(["key", "userId"]);
+    console.log("[HANDLER] vault.admin.list called");
+    // let query = db.selectFrom("vault").select(["key", "userId"]);
 
-    if (req.userId) {
-      query = query.where("userId", "=", req.userId);
-    }
+    // if (req.userId) {
+    //   query = query.where("userId", "=", req.userId);
+    // }
 
-    const keys = await query.execute();
+    // const keys = await query.execute();
 
-    return { keys };
+    return { keys: [] };
   },
   validation: (input: Request) => {
     if (input.userId && typeof input.userId !== "string") {
