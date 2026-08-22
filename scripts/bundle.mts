@@ -26,6 +26,7 @@ async function bundle() {
     target: ["es2022"],
     platform: "node",
     external: ["@bunny.net/edgescript-sdk", "crypto"],
+    alias: { "@libsql/client": "@libsql/client/web" },
     logLevel: "info",
   });
 
