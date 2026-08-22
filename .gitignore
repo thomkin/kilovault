@@ -32,3 +32,6 @@ node_modules
 .env.production
 
 dist
+
+# Local sqld (libsql-protocol) dev database, started via `pnpm run dev:db`
+.sqld-local/

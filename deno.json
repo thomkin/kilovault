@@ -1,0 +1,6 @@
+{
+  "imports": {
+    "@crunch/": "./build/crunch.ts/src/",
+    "src/": "./src/"
+  }
+}
