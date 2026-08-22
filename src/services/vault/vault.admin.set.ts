@@ -1,6 +1,7 @@
 import type { ServiceDefinition } from "@crunch/types/service";
 import { db } from "src/db";
 import { encrypt, encryptedDataToString } from "src/crypto/encryption";
+import { MAX_VAULT_FIELD_BYTES, exceedsByteLimit } from "src/services/vault/limits";
 
 export interface Request {
   userId: string;
@@ -68,6 +69,12 @@ export const service: ServiceDefinition<Request, Response> = {
       return null;
     }
     if (!input.value || typeof input.value !== "string") {
+      return null;
+    }
+    if (exceedsByteLimit(input.key, MAX_VAULT_FIELD_BYTES)) {
+      return null;
+    }
+    if (exceedsByteLimit(input.value, MAX_VAULT_FIELD_BYTES)) {
       return null;
     }
     return { userId: input.userId, key: input.key, value: input.value };

@@ -1,6 +1,8 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { service as vaultGetService } from "./vault.get";
 import { service as vaultSetService } from "./vault.set";
+import { service as vaultAdminSetService } from "./vault.admin.set";
+import { MAX_VAULT_FIELD_BYTES } from "./limits";
 import type { RpcContext } from "@crunch/types/service";
 
 // Mock database
@@ -18,8 +20,15 @@ vi.mock("src/db", () => ({
   },
 }));
 
+// Resolve the "src/..."-rooted specifier vault.set.ts/vault.admin.set.ts use
+// (baseUrl-relative, works under the real bunny.net/esbuild build, but
+// vitest doesn't read tsconfig baseUrl) to the real implementation.
+vi.mock("src/services/vault/limits", async () => {
+  return await vi.importActual<typeof import("./limits")>("./limits");
+});
+
 // Mock encryption to pass through values (not actually encrypting in tests)
-vi.mock("../../crypto/encryption", () => ({
+vi.mock("src/crypto/encryption", () => ({
   encrypt: vi.fn((plaintext: string) => ({
     ciphertext: plaintext,
     iv: "mock-iv",
@@ -32,6 +41,8 @@ vi.mock("../../crypto/encryption", () => ({
 }));
 
 import { db } from "src/db";
+
+process.env.VAULT_MASTER_PASSWORD = "test-master-password";
 
 describe("vault.get Security", () => {
   let ctx: RpcContext;
@@ -296,6 +307,32 @@ describe("vault.set Security", () => {
       const result = vaultSetService.validation(req);
       expect(result).toEqual(req);
     });
+
+    it("rejects a value one byte over the 512KB limit", () => {
+      const oversized = "a".repeat(MAX_VAULT_FIELD_BYTES + 1);
+      const result = vaultSetService.validation({ key: "k", value: oversized });
+      expect(result).toBeNull();
+    });
+
+    it("accepts a value exactly at the 512KB limit", () => {
+      const atLimit = "a".repeat(MAX_VAULT_FIELD_BYTES);
+      const result = vaultSetService.validation({ key: "k", value: atLimit });
+      expect(result).toEqual({ key: "k", value: atLimit });
+    });
+
+    it("rejects a key one byte over the 512KB limit", () => {
+      const oversizedKey = "k".repeat(MAX_VAULT_FIELD_BYTES + 1);
+      const result = vaultSetService.validation({ key: oversizedKey, value: "v" });
+      expect(result).toBeNull();
+    });
+
+    it("measures multi-byte characters by UTF-8 byte length, not string length", () => {
+      // "€" is 1 UTF-16 code unit but 3 UTF-8 bytes.
+      const euroSigns = "€".repeat(Math.floor(MAX_VAULT_FIELD_BYTES / 3) + 1);
+      expect(euroSigns.length).toBeLessThanOrEqual(MAX_VAULT_FIELD_BYTES);
+      const result = vaultSetService.validation({ key: "k", value: euroSigns });
+      expect(result).toBeNull();
+    });
   });
 
   describe("Audit Logging", () => {
@@ -340,5 +377,37 @@ describe("vault.set Security", () => {
         vaultSetService.handler({ key: "test-key", value: "test-value" }, ctx)
       ).rejects.toThrow("Database error");
     });
+  });
+});
+
+describe("vault.admin.set Input Validation", () => {
+  it("rejects a value one byte over the 512KB limit", () => {
+    const oversized = "a".repeat(MAX_VAULT_FIELD_BYTES + 1);
+    const result = vaultAdminSetService.validation({
+      userId: "user-123",
+      key: "k",
+      value: oversized,
+    });
+    expect(result).toBeNull();
+  });
+
+  it("accepts a value exactly at the 512KB limit", () => {
+    const atLimit = "a".repeat(MAX_VAULT_FIELD_BYTES);
+    const result = vaultAdminSetService.validation({
+      userId: "user-123",
+      key: "k",
+      value: atLimit,
+    });
+    expect(result).toEqual({ userId: "user-123", key: "k", value: atLimit });
+  });
+
+  it("rejects a key one byte over the 512KB limit", () => {
+    const oversizedKey = "k".repeat(MAX_VAULT_FIELD_BYTES + 1);
+    const result = vaultAdminSetService.validation({
+      userId: "user-123",
+      key: oversizedKey,
+      value: "v",
+    });
+    expect(result).toBeNull();
   });
 });

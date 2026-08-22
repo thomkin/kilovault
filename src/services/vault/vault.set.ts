@@ -1,6 +1,7 @@
 import type { ServiceDefinition, RpcContext } from "@crunch/types/service";
 import { db } from "src/db";
 import { encrypt, encryptedDataToString } from "src/crypto/encryption";
+import { MAX_VAULT_FIELD_BYTES, exceedsByteLimit } from "src/services/vault/limits";
 
 export interface Request {
   key: string;
@@ -75,6 +76,12 @@ export const service: ServiceDefinition<Request, Response> = {
   },
   validation: (req: Request) => {
     if (!req || !req.key || !req.value) {
+      return null;
+    }
+    if (exceedsByteLimit(req.key, MAX_VAULT_FIELD_BYTES)) {
+      return null;
+    }
+    if (exceedsByteLimit(req.value, MAX_VAULT_FIELD_BYTES)) {
       return null;
     }
 
