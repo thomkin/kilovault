@@ -4,7 +4,6 @@ import { decrypt, stringToEncryptedData } from "src/crypto/encryption";
 
 export interface Request {
   key: string;
-  clientSecret?: string;
 }
 
 export interface Response {
@@ -43,16 +42,8 @@ export const service: ServiceDefinition<Request, Response> = {
     }
 
     try {
-      // Decrypt server-side encryption (master password)
       const encrypted = stringToEncryptedData(result.value);
-      let decryptedValue = await decrypt(encrypted, VAULT_MASTER_PASSWORD);
-
-      // Decrypt client-side E2E encryption if clientSecret provided
-      if (req.clientSecret) {
-        const clientEncrypted = stringToEncryptedData(decryptedValue);
-        decryptedValue = await decrypt(clientEncrypted, req.clientSecret);
-      }
-
+      const decryptedValue = await decrypt(encrypted, VAULT_MASTER_PASSWORD);
       return { value: decryptedValue };
     } catch (error) {
       console.error("Error decrypting vault value:", error);
@@ -64,10 +55,6 @@ export const service: ServiceDefinition<Request, Response> = {
       return null;
     }
 
-    const result: Request = { key: input.key };
-    if (input.clientSecret && typeof input.clientSecret === "string") {
-      result.clientSecret = input.clientSecret;
-    }
-    return result;
+    return { key: input.key };
   },
 };

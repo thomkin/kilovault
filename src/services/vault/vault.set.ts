@@ -6,7 +6,6 @@ import { MAX_VAULT_FIELD_BYTES, exceedsByteLimit } from "src/services/vault/limi
 export interface Request {
   key: string;
   value: string;
-  clientSecret?: string;
 }
 
 export interface Response {}
@@ -23,16 +22,8 @@ export const service: ServiceDefinition<Request, Response> = {
         throw new Error("VAULT_MASTER_PASSWORD environment variable not set");
       }
 
-      let valueToStore = req.value;
-
-      // Client-side E2E encryption (optional)
-      if (req.clientSecret) {
-        const encrypted = await encrypt(valueToStore, req.clientSecret);
-        valueToStore = encryptedDataToString(encrypted);
-      }
-
       // Server-side encryption with master password
-      const encrypted = await encrypt(valueToStore, VAULT_MASTER_PASSWORD);
+      const encrypted = await encrypt(req.value, VAULT_MASTER_PASSWORD);
       const encryptedValue = encryptedDataToString(encrypted);
 
       const existing = await db
@@ -85,10 +76,6 @@ export const service: ServiceDefinition<Request, Response> = {
       return null;
     }
 
-    const result: Request = { key: req.key, value: req.value };
-    if (req.clientSecret && typeof req.clientSecret === "string") {
-      result.clientSecret = req.clientSecret;
-    }
-    return result;
+    return { key: req.key, value: req.value };
   },
 };
