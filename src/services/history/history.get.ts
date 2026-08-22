@@ -29,7 +29,7 @@ export const service: ServiceDefinition<Request, Response> = {
       query.where("userId", "=", req.userId);
     }
 
-    const result = await query.execute();
+    // const result = await query.execute();
 
     return {
       history: [],
