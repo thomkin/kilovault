@@ -1,13 +1,14 @@
-import { Kysely } from "kysely";
-import { LibsqlDialect } from "@libsql/kysely-libsql";
-import { createClient } from "@libsql/client";
-import { Database } from "./types";
+import type { Database } from "./types";
 
-let dbInstance: Kysely<Database> | null = null;
+let dbInstance: any = null;
 
-function getDb(): Kysely<Database> {
+function getDb(): any {
   if (!dbInstance) {
-    dbInstance = new Kysely<Database>({
+    const { Kysely } = require("kysely");
+    const { LibsqlDialect } = require("@libsql/kysely-libsql");
+    const { createClient } = require("@libsql/client");
+
+    dbInstance = new Kysely({
       dialect: new LibsqlDialect({
         client: createClient({
           url: process.env.DB_URL!,
@@ -20,7 +21,7 @@ function getDb(): Kysely<Database> {
   return dbInstance;
 }
 
-export const db = new Proxy({} as Kysely<Database>, {
+export const db = new Proxy({} as any, {
   get(target, prop, receiver) {
     return Reflect.get(getDb(), prop, receiver);
   },
