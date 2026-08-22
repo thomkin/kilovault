@@ -1,7 +1,18 @@
 import type { ServiceDefinition } from "@crunch/types/service";
-export interface Response { timestamp: string; }
-export const service: ServiceDefinition<unknown, Response> = {
+
+export interface Request {}
+
+export interface Response {
+  timestamp: number;
+}
+
+export const service: ServiceDefinition<Request, Response> = {
   method: "system.alive",
   isPublic: true,
-  handler: async () => ({ timestamp: new Date().toISOString() }),
+  handler: async (req: Request): Promise<Response> => {
+    return {
+      timestamp: new Date().getTime(),
+    };
+  },
+  validation: (input: Request) => input,
 };
