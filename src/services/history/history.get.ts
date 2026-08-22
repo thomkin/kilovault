@@ -21,13 +21,13 @@ export const service: ServiceDefinition<Request, Response> = {
   requiredPermission: ["admin"],
   handler: async (req: Request, ctx: RpcContext): Promise<Response> => {
     console.log("[HANDLER] history.get called");
-    const query = db
-      .selectFrom("history")
-      .select(["id", "key", "type", "createdAt", "userId"]);
+    // const query = db
+    //   .selectFrom("history")
+    //   .select(["id", "key", "type", "createdAt", "userId"]);
 
-    if (req.userId) {
-      query.where("userId", "=", req.userId);
-    }
+    // if (req.userId) {
+    //   query.where("userId", "=", req.userId);
+    // }
 
     // const result = await query.execute();
 
