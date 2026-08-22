@@ -16,47 +16,47 @@ export const service: ServiceDefinition<Request, Response> = {
   requiredPermission: ["admin"],
   handler: async (req: Request): Promise<Response> => {
     console.log("[HANDLER] vault.admin.set called");
-    // const VAULT_MASTER_PASSWORD = process.env.VAULT_MASTER_PASSWORD;
-    // if (!VAULT_MASTER_PASSWORD) {
-    //   throw new Error("VAULT_MASTER_PASSWORD environment variable not set");
-    // }
+    const VAULT_MASTER_PASSWORD = process.env.VAULT_MASTER_PASSWORD;
+    if (!VAULT_MASTER_PASSWORD) {
+      throw new Error("VAULT_MASTER_PASSWORD environment variable not set");
+    }
 
-    // const encrypted = await encrypt(req.value, VAULT_MASTER_PASSWORD);
-    // const encryptedValue = encryptedDataToString(encrypted);
+    const encrypted = await encrypt(req.value, VAULT_MASTER_PASSWORD);
+    const encryptedValue = encryptedDataToString(encrypted);
 
-    // const existing = await db
-    //   .selectFrom("vault")
-    //   .select("key")
-    //   .where("key", "=", req.key)
-    //   .where("userId", "=", req.userId)
-    //   .executeTakeFirst();
+    const existing = await db
+      .selectFrom("vault")
+      .select("key")
+      .where("key", "=", req.key)
+      .where("userId", "=", req.userId)
+      .executeTakeFirst();
 
-    // if (existing) {
-    //   await db
-    //     .updateTable("vault")
-    //     .set({ value: encryptedValue })
-    //     .where("key", "=", req.key)
-    //     .where("userId", "=", req.userId)
-    //     .execute();
-    // } else {
-    //   await db
-    //     .insertInto("vault")
-    //     .values({
-    //       key: req.key,
-    //       value: encryptedValue,
-    //       userId: req.userId,
-    //     })
-    //     .execute();
-    // }
+    if (existing) {
+      await db
+        .updateTable("vault")
+        .set({ value: encryptedValue })
+        .where("key", "=", req.key)
+        .where("userId", "=", req.userId)
+        .execute();
+    } else {
+      await db
+        .insertInto("vault")
+        .values({
+          key: req.key,
+          value: encryptedValue,
+          userId: req.userId,
+        })
+        .execute();
+    }
 
-    // await db
-    //   .insertInto("history")
-    //   .values({
-    //     key: req.key,
-    //     userId: req.userId,
-    //     type: "set",
-    //   })
-    //   .execute();
+    await db
+      .insertInto("history")
+      .values({
+        key: req.key,
+        userId: req.userId,
+        type: "set",
+      })
+      .execute();
 
     return {};
   },

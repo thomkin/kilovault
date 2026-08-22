@@ -89,7 +89,7 @@ describe("history.get Security", () => {
       const mockDb = db as any;
       mockDb.selectFrom.mockReturnValue(mockDb);
       mockDb.select.mockReturnValue(mockDb);
-      mockDb.execute.mockResolvedValue(null);
+      mockDb.execute.mockResolvedValue([]);
 
       const result = await historyGetService.handler({}, adminCtx);
 

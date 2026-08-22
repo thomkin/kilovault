@@ -11,7 +11,7 @@ export interface Vault {
 export interface History {
   id: Generated<string>;
   key: string;
-  type: "set" | "get";
+  type: "set" | "get" | "delete";
   userId: string;
   createdAt: Generated<string>;
 }

@@ -16,23 +16,23 @@ export const service: ServiceDefinition<Request, Response> = {
   requiredPermission: ["admin"],
   handler: async (req: Request): Promise<Response> => {
     console.log("[HANDLER] vault.admin.delete called");
-    // const result = await db
-    //   .deleteFrom("vault")
-    //   .where("userId", "=", req.userId)
-    //   .where("key", "=", req.key)
-    //   .executeTakeFirst();
+    const result = await db
+      .deleteFrom("vault")
+      .where("userId", "=", req.userId)
+      .where("key", "=", req.key)
+      .executeTakeFirst();
 
-    // await db
-    //   .insertInto("history")
-    //   .values({
-    //     key: req.key,
-    //     userId: req.userId,
-    //     type: "delete",
-    //   })
-    //   .execute();
+    await db
+      .insertInto("history")
+      .values({
+        key: req.key,
+        userId: req.userId,
+        type: "delete",
+      })
+      .execute();
 
     return {
-      deleted: false,
+      deleted: (result?.numDeletedRows ?? 0n) > 0n,
     };
   },
   validation: (input: Request) => {
